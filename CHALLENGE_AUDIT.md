@@ -15,9 +15,9 @@ Evidence:
 - The developer audit exposes tool arguments, results, state changes, and errors.
 - A local registry fallback is clearly labeled as a rehearsal when the browser does not expose WebMCP; it does not claim a native protocol connection.
 
-Remaining ceiling:
+Production verification:
 
-- Native discovery must be tested again on the final HTTPS deployment in ChatGPT's in-app browser or an origin-trial Chrome build. The live deployment includes the required WebMCP security headers.
+- The final HTTPS deployment was tested in ChatGPT's in-app browser. All ten tools were discovered from the live origin, and the compound search returned 20 checked makers, three shortlisted candidates, and Mellow Cake at ₩44,000.
 
 ## 2. Execution — 9/10
 
@@ -28,13 +28,13 @@ Evidence:
 - Search and final quote use the same pricing engine and both produce the expected ₩44,000 total.
 - Partial configuration changes preserve unspecified state.
 - Demo orders are persisted in localStorage and can be read from the visible order ledger or `get_order_status`.
-- Six automated tests cover comparison evidence, shared pricing, ranking, state preservation, invalid inputs, confirmation gating, persistence, and native tool registration.
+- Eight automated tests cover comparison evidence, shared pricing, ranking, state preservation, invalid inputs, confirmation gating, persistence, and the complete tool contract.
 - The production bundle builds successfully and was smoke-tested in a clean browser tab with no console errors.
 - Desktop and 390 px mobile layouts were visually inspected.
 
-Remaining ceiling:
+Production verification:
 
-- Native WebMCP discovery should be verified against the final production URL before submission.
+- The live app returns HTTP 200 with `Origin-Agent-Cluster: ?1` and `Permissions-Policy: tools=(self)` and exposes the full WebMCP lifecycle in ChatGPT's in-app browser.
 
 ## 3. Potential impact — 9/10
 
@@ -58,4 +58,4 @@ Evidence:
 
 ## Final risk review
 
-Public access and the required deployment headers are verified. Run one native WebMCP discovery pass and capture a sub-three-minute screen recording before submission.
+Public access, deployment headers, native tool discovery, and the representative live tool flow are verified. Record the provided sub-three-minute demo script, publish it on YouTube, and confirm that Devpost shows the entry as Submitted before the deadline.

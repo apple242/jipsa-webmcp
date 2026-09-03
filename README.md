@@ -6,6 +6,8 @@ Jipsa is a consumer marketplace for custom cakes from trusted local makers. Cust
 
 Live storefront: https://jipsa.dev557938.chatgpt.site
 
+Judge links: [Testing instructions](docs/TESTING.md) · [Devpost submission copy](SUBMISSION.md) · [Demo video script](docs/DEMO_VIDEO_SCRIPT.md)
+
 This repository is a standalone submission for **The WebMCP Challenge**. The current catalog, availability, and orders are sample data; no API keys or production credentials are required.
 
 ## The problem
@@ -77,6 +79,7 @@ WebMCP tool callbacks ┘               │
 - `src/webmcp.ts` defines and registers the 10 WebMCP tools through `document.modelContext.registerTool()`.
 - `src/App.tsx` renders the storefront, live configurator, ChatGPT shopping drawer, confirmation, and order ledger.
 - `src/marketplace.test.ts` covers ranking, partial updates, useful errors, and confirmation-gated persistence.
+- `src/webmcp.test.ts` verifies the complete, unique, agent-readable 10-tool contract.
 
 The submission intentionally focuses on one complete vertical—custom cakes—rather than presenting unfinished categories. Every visible maker participates in the same search, configuration, pricing, and pickup flow.
 
@@ -100,6 +103,8 @@ npm test
 npm run build
 ```
 
+The live ChatGPT Sites deployment has also been verified in ChatGPT's in-app browser: all 10 tools are discoverable, and the compound search returns 20 checked makers, three shortlisted candidates, and a ₩44,000 exact best match.
+
 ## Demo flow
 
 1. Land directly in the consumer marketplace and briefly browse a store manually.
@@ -117,3 +122,7 @@ npm run build
 - No secrets, credentials, personal data, or production connections.
 - Generated catalog photography is committed as a project asset.
 - Prototype orders remain in the visitor's browser only.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
