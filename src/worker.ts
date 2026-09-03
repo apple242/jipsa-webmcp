@@ -6,6 +6,8 @@ interface Environment {
   ASSETS: AssetBinding;
 }
 
+declare const __NEARMADE_HTML__: string;
+
 function withWebMcpHeaders(response: Response) {
   const headers = new Headers(response.headers);
   headers.set("Origin-Agent-Cluster", "?1");
@@ -16,11 +18,19 @@ function withWebMcpHeaders(response: Response) {
 
 export default {
   async fetch(request: Request, environment: Environment) {
-    let response = await environment.ASSETS.fetch(request);
-    if (response.status === 404 && request.method === "GET") {
-      const url = new URL(request.url);
-      response = await environment.ASSETS.fetch(new Request(new URL("/index.html", url.origin), request));
+    const url = new URL(request.url);
+    const isDocumentRoute =
+      (request.method === "GET" || request.method === "HEAD") &&
+      (url.pathname === "/" || !/\.[^/]+$/.test(url.pathname));
+
+    if (isDocumentRoute) {
+      return withWebMcpHeaders(
+        new Response(request.method === "HEAD" ? null : __NEARMADE_HTML__, {
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        }),
+      );
     }
-    return withWebMcpHeaders(response);
+
+    return withWebMcpHeaders(await environment.ASSETS.fetch(request));
   },
 };

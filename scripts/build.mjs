@@ -23,6 +23,12 @@ await build({
   logLevel: "info",
 });
 
+const sourceHtml = await readFile(path.join(projectRoot, "index.html"), "utf8");
+const productionHtml = sourceHtml.replace(
+  '<script type="module" src="/src/main.tsx"></script>',
+  '<link rel="stylesheet" href="/assets/app.css" />\n    <script type="module" src="/assets/app.js"></script>',
+);
+
 await build({
   entryPoints: [path.join(projectRoot, "src", "worker.ts")],
   bundle: true,
@@ -30,18 +36,12 @@ await build({
   target: ["es2022"],
   format: "esm",
   platform: "neutral",
+  define: { __NEARMADE_HTML__: JSON.stringify(productionHtml) },
   outfile: path.join(serverDirectory, "index.js"),
   logLevel: "info",
 });
 
 await cp(path.join(projectRoot, "public"), clientDirectory, { recursive: true });
-
-const sourceHtml = await readFile(path.join(projectRoot, "index.html"), "utf8");
-const productionHtml = sourceHtml.replace(
-  '<script type="module" src="/src/main.tsx"></script>',
-  '<link rel="stylesheet" href="/assets/app.css" />\n    <script type="module" src="/assets/app.js"></script>',
-);
-await writeFile(path.join(clientDirectory, "index.html"), productionHtml, "utf8");
 
 await writeFile(
   path.join(serverDirectory, "wrangler.json"),
