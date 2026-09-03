@@ -74,7 +74,7 @@ function Header({ onOpenAgent, onOpenOrders }: { onOpenAgent: () => void; onOpen
   const [mobileOpen, setMobileOpen] = useState(false);
   return (
     <>
-      <div className="announcement-bar"><span>Made to order by independent local makers</span><span>Free pickup coordination on every order</span></div>
+      <div className="announcement-bar"><span>Made to order by independent local makers</span><span>Now shop Jipsa with ChatGPT</span></div>
       <header className="site-header" id="top">
         <div className="header-inner">
           <Logo />
@@ -95,7 +95,7 @@ function Header({ onOpenAgent, onOpenOrders }: { onOpenAgent: () => void; onOpen
             </button>
             <button className="agent-button" type="button" onClick={onOpenAgent}>
               <Sparkles size={16} />
-              Order with ChatGPT
+              Shop with ChatGPT
             </button>
             <button className="icon-button mobile-menu" type="button" onClick={() => setMobileOpen((value) => !value)} title="Open menu">
               <Menu size={20} />
@@ -111,13 +111,21 @@ function Hero({ onOpenAgent }: { onOpenAgent: () => void }) {
   return (
     <section className="hero shell">
       <div className="hero-copy">
-        <p className="eyebrow"><LocateFixed size={14} /> Custom-made in your neighborhood</p>
+        <p className="eyebrow"><LocateFixed size={14} /> Custom-made locally · Shoppable with ChatGPT</p>
         <h1>A cake that feels<br /><em>made for them.</em></h1>
-        <p className="hero-intro">Shop celebration cakes from trusted local bakers. Choose every detail online and pick up exactly when you need it.</p>
+        <p className="hero-intro">Shop celebration cakes from trusted local bakers—or ask ChatGPT to compare makers, check pickup times, and prepare the right order.</p>
         <div className="hero-actions">
           <a className="primary-link" href="#marketplace">Shop custom cakes <ArrowRight size={17} /></a>
-          <button className="text-button" type="button" onClick={onOpenAgent}><Sparkles size={16} /> Order with ChatGPT</button>
+          <button className="text-button" type="button" onClick={onOpenAgent}><Sparkles size={16} /> Shop with ChatGPT</button>
         </div>
+        <button className="hero-agent-flow" type="button" onClick={onOpenAgent} aria-label="Open the ChatGPT shopping assistant">
+          <span className="hero-agent-label"><Sparkles size={15} /><strong>How ChatGPT shops Jipsa</strong></span>
+          <span className="hero-agent-step"><b>1</b> Tell it what you need</span>
+          <ArrowRight size={13} />
+          <span className="hero-agent-step"><b>2</b> It compares makers</span>
+          <ArrowRight size={13} />
+          <span className="hero-agent-step"><b>3</b> You review and confirm</span>
+        </button>
         <div className="hero-proof"><span><CircleCheck size={14} /> Real-time pickup slots</span><span><CircleCheck size={14} /> Clear custom pricing</span></div>
       </div>
       <div className="hero-visual" aria-label="Featured custom cakes">
