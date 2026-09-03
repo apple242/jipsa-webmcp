@@ -6,6 +6,8 @@ Jipsa is a consumer marketplace for custom cakes from trusted local makers. Cust
 
 Live storefront: https://jipsa.dev557938.chatgpt.site
 
+Public demo video: https://youtu.be/a7XlwGjacD0
+
 Judge links: [Testing instructions](docs/TESTING.md) · [Devpost submission copy](SUBMISSION.md) · [Demo video script](docs/DEMO_VIDEO_SCRIPT.md)
 
 This repository is a standalone submission for **The WebMCP Challenge**. The current catalog, availability, and orders are sample data; no API keys or production credentials are required.

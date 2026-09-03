@@ -4,6 +4,10 @@
 
 A real local cake marketplace where people shop visually and AI agents compare, configure, quote, and prepare the same order through WebMCP.
 
+Live app: https://jipsa.dev557938.chatgpt.site  
+Public demo video: https://youtu.be/a7XlwGjacD0  
+Public source: https://github.com/apple242/jipsa-webmcp
+
 ## What Jipsa does
 
 Ordering a custom cake is not a normal product search. Price depends on size, filling, lettering, and extras; availability depends on a maker-specific pickup calendar; and every shop supports a different set of options. A customer usually has to open many pages and manually reconcile those constraints.
