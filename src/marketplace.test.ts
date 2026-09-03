@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 import { beforeEach, describe, expect, it } from "vitest";
-import { executeMarketplaceTool, marketplaceStore, searchStores } from "./marketplace";
+import { compareStores, executeMarketplaceTool, marketplaceStore, searchStores } from "./marketplace";
 import { registerWebMcpTools, webMcpTools } from "./webmcp";
 
 describe("Jipsa marketplace tools", () => {
@@ -10,7 +10,7 @@ describe("Jipsa marketplace tools", () => {
   });
 
   it("ranks the exact store ahead of transparent near-time matches", () => {
-    const results = searchStores({
+    const query = {
       maxDistanceKm: 3,
       maxBudgetKrw: 50000,
       pickupTime: "16:00",
@@ -18,7 +18,8 @@ describe("Jipsa marketplace tools", () => {
       ingredient: "Strawberry",
       creamColor: "White",
       letteringRequired: true,
-    });
+    };
+    const { results, breakdown } = compareStores(query);
 
     expect(results[0]).toMatchObject({
       storeId: "mellow-cake",
@@ -28,6 +29,37 @@ describe("Jipsa marketplace tools", () => {
     });
     expect(results[1]).toMatchObject({ storeId: "dear-cake", exactPickupTime: false, closestPickupTime: "16:30" });
     expect(results[2]).toMatchObject({ storeId: "cake-forest", exactPickupTime: false, closestPickupTime: "17:00" });
+    expect(breakdown.checked).toBe(20);
+    expect(breakdown.shortlisted).toBe(results.length);
+    expect(breakdown.outsideRadius).toBeGreaterThan(0);
+    expect(breakdown.overBudget).toBeGreaterThan(0);
+    expect(breakdown.missingProductOption).toBeGreaterThan(0);
+    expect(breakdown.exactPickupUnavailable).toBeGreaterThan(0);
+  });
+
+  it("uses the same pricing engine for search estimates and the final quote", async () => {
+    const results = searchStores({
+      maxDistanceKm: 3,
+      maxBudgetKrw: 50000,
+      pickupTime: "16:00",
+      servings: 4,
+      ingredient: "Strawberry",
+      creamColor: "Light pink",
+      letteringRequired: true,
+    });
+    await executeMarketplaceTool("get_store_details", { storeId: "mellow-cake" });
+    await executeMarketplaceTool("configure_product", {
+      storeId: "mellow-cake",
+      servings: 4,
+      filling: "Fresh strawberry",
+      creamColor: "Light pink",
+      lettering: "Happy Birthday Mina",
+      pickupTime: "16:00",
+    });
+    const result = await executeMarketplaceTool("get_quote", {}) as { quote: { totalKrw: number } };
+
+    expect(results[0].estimatedPriceKrw).toBe(44000);
+    expect(result.quote.totalKrw).toBe(results[0].estimatedPriceKrw);
   });
 
   it("preserves all unspecified configuration fields during a human correction", async () => {

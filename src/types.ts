@@ -1,4 +1,4 @@
-export type CategoryId = "cakes" | "flowers" | "gifts" | "desserts";
+export type CategoryId = "cakes";
 
 export interface Product {
   id: string;
@@ -60,6 +60,15 @@ export interface SearchCandidate {
   explanation: string;
 }
 
+export interface SearchBreakdown {
+  checked: number;
+  outsideRadius: number;
+  overBudget: number;
+  missingProductOption: number;
+  exactPickupUnavailable: number;
+  shortlisted: number;
+}
+
 export interface ProductConfiguration {
   storeId: string;
   productId: string;
@@ -113,6 +122,7 @@ export interface MarketplaceState {
   category: CategoryId;
   searchArgs: SearchArgs | null;
   searchResults: SearchCandidate[];
+  searchBreakdown: SearchBreakdown | null;
   selectedStoreId: string | null;
   configuration: ProductConfiguration | null;
   quote: Quote | null;

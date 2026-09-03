@@ -4,8 +4,8 @@ import {
   Check,
   ChevronDown,
   CircleCheck,
+  Clock3,
   ClipboardCheck,
-  Gift,
   Heart,
   LocateFixed,
   MapPin,
@@ -22,9 +22,9 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { cakeStores, categories, getStore, imageIndexForColor, imagePosition } from "./data";
-import { configureForHuman, formatTime, marketplaceStore, selectStoreForHuman } from "./marketplace";
-import type { MarketplaceState, SearchCandidate, Store } from "./types";
+import { cakeStores, getStore, imageIndexForColor, imagePosition } from "./data";
+import { compareStores, configureForHuman, formatTime, marketplaceStore, selectStoreForHuman } from "./marketplace";
+import type { MarketplaceState, SearchArgs, SearchBreakdown, SearchCandidate, Store } from "./types";
 import { invokeTool, registerWebMcpTools } from "./webmcp";
 
 type AgentMessage = {
@@ -45,6 +45,18 @@ function todayToNextSaturday() {
   date.setDate(date.getDate() + days);
   return date.toISOString().slice(0, 10);
 }
+
+const DEMO_SEARCH_ARGS: SearchArgs = {
+  category: "cakes",
+  maxDistanceKm: 3,
+  maxBudgetKrw: 50000,
+  pickupDate: todayToNextSaturday(),
+  pickupTime: "16:00",
+  servings: 4,
+  ingredient: "Strawberry",
+  creamColor: "White",
+  letteringRequired: true,
+};
 
 function CakeImage({ index, className = "", label }: { index: number; className?: string; label: string }) {
   return (
@@ -74,22 +86,20 @@ function Header({ onOpenAgent, onOpenOrders }: { onOpenAgent: () => void; onOpen
   const [mobileOpen, setMobileOpen] = useState(false);
   return (
     <>
-      <div className="announcement-bar"><span>Made to order by independent local makers</span><span>Now shop Jipsa with ChatGPT</span></div>
+      <div className="announcement-bar"><span>Made to order by independent local bakers</span><span>Free pickup coordination on every order</span></div>
       <header className="site-header" id="top">
         <div className="header-inner">
           <Logo />
           <nav className={mobileOpen ? "main-nav is-open" : "main-nav"} aria-label="Main navigation">
             <a href="#marketplace">Shop</a>
-            <a href="#marketplace">Custom cakes</a>
-            <a href="#categories">Flowers & gifts</a>
+            <a href="#marketplace">Cake makers</a>
             <a href="#how-it-works">How it works</a>
           </nav>
           <div className="header-actions">
-            <button className="location-button" type="button">
+            <div className="location-button" aria-label="Pickup area: Seongsu">
               <MapPin size={16} strokeWidth={2} />
-              <span>Seongsu</span>
-              <ChevronDown size={14} />
-            </button>
+              <span>Seongsu pickup</span>
+            </div>
             <button className="icon-button order-button" type="button" onClick={onOpenOrders} title="View orders">
               <ShoppingBag size={19} />
             </button>
@@ -108,55 +118,32 @@ function Header({ onOpenAgent, onOpenOrders }: { onOpenAgent: () => void; onOpen
 }
 
 function Hero({ onOpenAgent }: { onOpenAgent: () => void }) {
+  const preview = compareStores(DEMO_SEARCH_ARGS);
   return (
     <section className="hero shell">
       <div className="hero-copy">
-        <p className="eyebrow"><LocateFixed size={14} /> Custom-made locally · Shoppable with ChatGPT</p>
+        <p className="eyebrow"><LocateFixed size={14} /> 20 independent cake makers near you</p>
         <h1>A cake that feels<br /><em>made for them.</em></h1>
         <p className="hero-intro">Shop celebration cakes from trusted local bakers—or ask ChatGPT to compare makers, check pickup times, and prepare the right order.</p>
         <div className="hero-actions">
           <a className="primary-link" href="#marketplace">Shop custom cakes <ArrowRight size={17} /></a>
           <button className="text-button" type="button" onClick={onOpenAgent}><Sparkles size={16} /> Shop with ChatGPT</button>
         </div>
-        <button className="hero-agent-flow" type="button" onClick={onOpenAgent} aria-label="Open the ChatGPT shopping assistant">
-          <span className="hero-agent-label"><Sparkles size={15} /><strong>How ChatGPT shops Jipsa</strong></span>
-          <span className="hero-agent-step"><b>1</b> Tell it what you need</span>
-          <ArrowRight size={13} />
-          <span className="hero-agent-step"><b>2</b> It compares makers</span>
-          <ArrowRight size={13} />
-          <span className="hero-agent-step"><b>3</b> You review and confirm</span>
-        </button>
-        <div className="hero-proof"><span><CircleCheck size={14} /> Real-time pickup slots</span><span><CircleCheck size={14} /> Clear custom pricing</span></div>
+        <div className="hero-proof"><span><CircleCheck size={14} /> Pickup slots by maker</span><span><CircleCheck size={14} /> Exact custom pricing</span></div>
       </div>
       <div className="hero-visual" aria-label="Featured custom cakes">
         <CakeImage index={0} label="White strawberry cake from Mellow Cake" className="hero-main-image" />
-        <div className="maker-note">
-          <span className="avatar">MC</span>
-          <span><strong>Mellow Cake</strong><small>1.2 km away · Ready Saturday</small></span>
-          <Heart size={17} />
-        </div>
+        <button className="hero-comparison-card" type="button" onClick={onOpenAgent} aria-label="Open this ChatGPT comparison">
+          <span className="hero-comparison-head"><span><Sparkles size={14} /> ChatGPT shortlist</span><strong>{preview.breakdown.checked} checked → {preview.breakdown.shortlisted} picks</strong></span>
+          {preview.results.slice(0, 3).map((candidate, index) => (
+            <span className="hero-comparison-row" key={candidate.storeId}>
+              <b>{index + 1}</b><span><strong>{candidate.storeName}</strong><small>{candidate.distanceKm} km · {formatKrw(candidate.estimatedPriceKrw)}</small></span><em>{candidate.exactPickupTime ? "4:00 PM exact" : formatTime(candidate.closestPickupTime)}</em>
+            </span>
+          ))}
+        </button>
         <div className="hero-thumbnail"><CakeImage index={1} label="Lavender vintage heart cake" /></div>
       </div>
     </section>
-  );
-}
-
-function CategoryTabs({ active, onChange }: { active: string; onChange: (id: MarketplaceState["category"]) => void }) {
-  return (
-    <div className="category-tabs" role="tablist" aria-label="Marketplace categories">
-      {categories.map((category) => (
-        <button
-          type="button"
-          role="tab"
-          aria-selected={active === category.id}
-          className={active === category.id ? "category-tab active" : "category-tab"}
-          key={category.id}
-          onClick={() => onChange(category.id)}
-        >
-          {category.label}<span>{category.count}</span>
-        </button>
-      ))}
-    </div>
   );
 }
 
@@ -188,6 +175,7 @@ function StoreCard({ store, rank, candidate }: { store: Store; rank?: number; ca
           </div>
           <span className="rating"><Star size={13} fill="currentColor" /> {store.rating}</span>
         </div>
+        <div className="card-location"><MapPin size={13} /><span>{store.neighborhood} · {store.distanceKm} km</span><span>{store.reviewCount} reviews</span></div>
         {candidate && (
           <div className="match-reason">
             <CircleCheck size={15} />
@@ -195,43 +183,36 @@ function StoreCard({ store, rank, candidate }: { store: Store; rank?: number; ca
           </div>
         )}
         <div className="card-meta">
-          <span><MapPin size={14} /> {store.distanceKm} km</span>
-          <span>From {formatKrw(store.priceRange[0])}</span>
+          <span><Clock3 size={14} /> {candidate ? formatTime(candidate.closestPickupTime) : `Next ${formatTime(store.pickupSlots[0])}`}</span>
+          <span>{candidate ? `${formatKrw(candidate.estimatedPriceKrw)} configured` : `From ${formatKrw(store.priceRange[0])}`}</span>
         </div>
       </div>
     </article>
   );
 }
 
-function NonCakeCategory({ category }: { category: MarketplaceState["category"] }) {
-  const item = categories.find((entry) => entry.id === category)!;
+function ComparisonEvidence({ breakdown, args }: { breakdown: SearchBreakdown; args: SearchArgs }) {
   return (
-    <div className={`category-preview category-${category}`}>
-      <div className="category-preview-copy">
-        <p className="eyebrow"><Gift size={14} /> Curated local collection</p>
-        <h3>{item.label} for every kind of occasion.</h3>
-        <p>{item.description}. Browse thoughtful pieces from independent studios, with clear lead times and customization options.</p>
-        <div className="sample-makers">
-          {item.sampleShops.slice(0, 5).map((shop) => <span key={shop}>{shop}</span>)}
-        </div>
-        <button type="button" onClick={() => marketplaceStore.update({ category: "cakes" })}>Shop custom cakes <ArrowRight size={16} /></button>
+    <div className="comparison-evidence">
+      <div className="comparison-total"><span><Sparkles size={17} /></span><div><strong>{breakdown.checked} makers checked</strong><small>{breakdown.shortlisted} shortlisted for this exact request</small></div></div>
+      <div className="comparison-filters">
+        <span><b>{breakdown.outsideRadius}</b> outside {args.maxDistanceKm ?? 3} km</span>
+        <span><b>{breakdown.overBudget}</b> over {formatKrw(args.maxBudgetKrw ?? 50000)}</span>
+        <span><b>{breakdown.missingProductOption}</b> missing an option</span>
+        <span><b>{breakdown.exactPickupUnavailable}</b> without the exact pickup time</span>
       </div>
-      <div className="category-art" aria-hidden="true">
-        <span className="shape-one" />
-        <span className="shape-two" />
-        <span className="shape-three" />
-        <Gift size={56} />
-      </div>
+      <small className="comparison-note">Criteria can overlap. Every displayed price includes the requested options.</small>
     </div>
   );
 }
 
 function Marketplace({ state, onOpenAgent }: { state: MarketplaceState; onOpenAgent: () => void }) {
-  const featured = cakeStores.slice(0, 8);
+  const [visibleCount, setVisibleCount] = useState(8);
+  const featured = cakeStores.slice(0, visibleCount);
   const searchStores = state.searchResults
     .map((result) => ({ store: getStore(result.storeId), result }))
     .filter((item): item is { store: Store; result: SearchCandidate } => Boolean(item.store));
-  const showingSearch = state.category === "cakes" && searchStores.length > 0;
+  const showingSearch = Boolean(state.searchArgs && searchStores.length > 0);
 
   return (
     <section className="marketplace-section" id="marketplace">
@@ -240,41 +221,31 @@ function Marketplace({ state, onOpenAgent }: { state: MarketplaceState; onOpenAg
           <div>
             <p className="section-kicker">Handmade near Seongsu</p>
             <h2>{showingSearch ? "Picked for your occasion" : "Custom cakes, ready when you are"}</h2>
-            <p className="section-subtitle">Compare designs, prices, and live pickup times from local bakeries.</p>
+            <p className="section-subtitle">Compare designs, exact configured prices, and available pickup times from local cake studios.</p>
           </div>
-          {showingSearch && <button className="reset-search" type="button" onClick={() => marketplaceStore.update({ searchResults: [], searchArgs: null })}><RotateCcw size={15} /> Clear recommendations</button>}
+          {showingSearch && <button className="reset-search" type="button" onClick={() => marketplaceStore.update({ searchResults: [], searchArgs: null, searchBreakdown: null })}><RotateCcw size={15} /> Clear recommendations</button>}
         </div>
         <SearchBar onAgentSearch={onOpenAgent} />
-        <CategoryTabs active={state.category} onChange={(category) => marketplaceStore.update({ category, searchResults: [] })} />
+        <div className="catalog-scope"><strong>Custom cakes</strong><span>{cakeStores.length} independent makers</span><span>One comparable ordering flow</span></div>
 
-        {state.category !== "cakes" ? (
-          <NonCakeCategory category={state.category} />
-        ) : (
-          <>
-            {showingSearch && (
-              <div className="best-match-summary">
-                <div className="summary-icon"><Sparkles size={19} /></div>
-                <div>
-                  <span>Recommended for you</span>
-                  <strong>{state.searchResults[0].explanation}</strong>
-                </div>
-                <button type="button" onClick={() => selectStoreForHuman(state.searchResults[0].storeId)}>Customize <ArrowRight size={15} /></button>
-              </div>
-            )}
-            <div className="store-grid">
-              {(showingSearch ? searchStores : featured.map((store) => ({ store, result: undefined }))).map((item, index) => (
-                <StoreCard key={item.store.id} store={item.store} rank={showingSearch ? index + 1 : undefined} candidate={item.result} />
-              ))}
+        {showingSearch && state.searchBreakdown && state.searchArgs && <ComparisonEvidence breakdown={state.searchBreakdown} args={state.searchArgs} />}
+        {showingSearch && (
+          <div className="best-match-summary">
+            <div className="summary-icon"><Sparkles size={19} /></div>
+            <div>
+              <span>Recommended for you</span>
+              <strong>{state.searchResults[0].explanation}</strong>
             </div>
-            {!showingSearch && (
-              <button className="show-more" type="button" onClick={() => marketplaceStore.update({ searchResults: cakeStores.slice(0, 12).map((store, index) => ({
-                storeId: store.id, storeName: store.name, distanceKm: store.distanceKm, estimatedPriceKrw: store.product.basePrice,
-                requestedPickupTime: "16:00", closestPickupTime: store.pickupSlots[0], exactPickupTime: store.pickupSlots.includes("16:00"),
-                satisfiesAllProductRequirements: true, unmetRequirements: [], score: 100 - index,
-                explanation: `${store.name} is available nearby.`,
-              })) })}>Show more cakes <ChevronDown size={16} /></button>
-            )}
-          </>
+            <button type="button" onClick={() => selectStoreForHuman(state.searchResults[0].storeId)}>Customize <ArrowRight size={15} /></button>
+          </div>
+        )}
+        <div className="store-grid">
+          {(showingSearch ? searchStores : featured.map((store) => ({ store, result: undefined }))).map((item, index) => (
+            <StoreCard key={item.store.id} store={item.store} rank={showingSearch ? index + 1 : undefined} candidate={item.result} />
+          ))}
+        </div>
+        {!showingSearch && visibleCount < cakeStores.length && (
+          <button className="show-more" type="button" onClick={() => setVisibleCount((count) => Math.min(count + 6, cakeStores.length))}>Show more cake makers <ChevronDown size={16} /></button>
         )}
       </div>
     </section>
@@ -319,6 +290,11 @@ function Configurator({ state, onClose, onOpenAgent }: { state: MarketplaceState
             <div className="maker-mini"><span>{store.name}</span><span><Star size={12} fill="currentColor" /> {store.rating} · {store.distanceKm} km</span></div>
             <h2>{store.product.name}</h2>
             <p>{store.description}. Every cake is finished to order in {store.neighborhood}.</p>
+            <div className="maker-facts">
+              <span><MapPin size={14} /><strong>{store.neighborhood} pickup</strong><small>Tue–Sun · 11 AM–7 PM</small></span>
+              <span><Clock3 size={14} /><strong>{store.sameDay ? "Same-day on select designs" : "Two-day standard lead time"}</strong><small>Changes accepted up to 48 hours before pickup</small></span>
+              <span><Star size={14} /><strong>{store.reviewCount} customer reviews</strong><small>{store.rating} average rating</small></span>
+            </div>
             <button className="assistant-nudge" type="button" onClick={onOpenAgent}><Sparkles size={16} /><span><strong>Not sure what to choose?</strong><small>Tell ChatGPT the occasion and budget.</small></span><ArrowRight size={16} /></button>
             <div className="form-grid">
               <SelectField label="Size" value={config.size} options={store.product.sizes} onChange={(size) => patch({ size })} />
@@ -387,18 +363,9 @@ function ChatGptShopper({ state, open, onClose, supported }: { state: Marketplac
   const runSearch = async () => {
     setRunning(true);
     addMessage({ role: "user", text: prompt });
-    const result = await invokeTool("search_local_stores", {
-      category: "cakes",
-      maxDistanceKm: 3,
-      maxBudgetKrw: 50000,
-      pickupDate: todayToNextSaturday(),
-      pickupTime: "16:00",
-      servings: 4,
-      ingredient: "Strawberry",
-      creamColor: "White",
-      letteringRequired: true,
-    }) as { bestMatch?: SearchCandidate; exactMatches?: SearchCandidate[]; nearMatches?: SearchCandidate[] };
-    addMessage({ role: "tool", tool: "search_local_stores", text: `${(result.exactMatches?.length || 0) + (result.nearMatches?.length || 0)} candidates compared across distance, price, options, and pickup inventory.` });
+    const result = await invokeTool("search_local_stores", { ...DEMO_SEARCH_ARGS }) as { bestMatch?: SearchCandidate; exactMatches?: SearchCandidate[]; nearMatches?: SearchCandidate[]; comparison?: SearchBreakdown };
+    const comparison = result.comparison;
+    addMessage({ role: "tool", tool: "search_local_stores", text: comparison ? `${comparison.checked} makers checked → ${comparison.shortlisted} shortlisted. ${comparison.outsideRadius} outside the radius, ${comparison.overBudget} over budget, ${comparison.missingProductOption} missing an option, and ${comparison.exactPickupUnavailable} without the exact pickup time.` : "Every maker was compared across distance, exact configured price, product options, and pickup availability." });
     addMessage({ role: "agent", text: result.bestMatch?.explanation || "I could not find an exact match." });
     setStage("searched");
     setRunning(false);
@@ -440,14 +407,14 @@ function ChatGptShopper({ state, open, onClose, supported }: { state: Marketplac
       <button className="studio-backdrop" type="button" onClick={onClose} aria-label="Close ChatGPT shopping assistant" />
       <aside className="agent-studio" role="dialog" aria-modal="true" aria-label="Shop with ChatGPT">
         <div className="studio-header">
-          <div className="studio-title"><span><Sparkles size={18} /></span><div><strong>Shop with ChatGPT</strong><small>Your Jipsa shopping assistant</small></div></div>
-          <div className="connection-status"><span className={supported ? "status-dot live" : "status-dot"} />Catalog connected</div>
+          <div className="studio-title"><span><Sparkles size={18} /></span><div><strong>Shop with ChatGPT</strong><small>{supported ? "Connected to Jipsa through WebMCP" : "Guided preview of the storefront tools"}</small></div></div>
+          <div className="connection-status"><span className={supported ? "status-dot live" : "status-dot"} />{supported ? "WebMCP active" : "Preview mode"}</div>
           <button className="icon-button" type="button" onClick={onClose} title="Close"><X size={20} /></button>
         </div>
         <div className="studio-context">
           <span>Shopping now</span>
           <strong>Custom cakes near Seongsu</strong>
-          <small>{cakeStores.length} local makers · live prices and pickup slots</small>
+          <small>{cakeStores.length} cake makers · configured prices and current pickup slots</small>
         </div>
         <div className="message-list">
           {messages.map((message, index) => (
@@ -572,23 +539,9 @@ function HowJipsaWorks({ onOpenAgent }: { onOpenAgent: () => void }) {
   );
 }
 
-function BroaderCategories() {
-  return (
-    <section className="broader-section" id="categories">
-      <div className="shell">
-        <p className="section-kicker">For every thoughtful gesture</p>
-        <div className="broader-heading"><h2>More ways to make it personal.</h2><p>Shop custom flowers, gifts, and desserts from small studios around your neighborhood.</p></div>
-        <div className="broader-grid">
-          {categories.map((category, index) => <button type="button" key={category.id} onClick={() => { marketplaceStore.update({ category: category.id, searchResults: [] }); document.getElementById("marketplace")?.scrollIntoView({ behavior: "smooth" }); }}><span>0{index + 1}</span><strong>{category.label}</strong><p>{category.description}</p><ArrowRight size={17} /></button>)}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function Footer() {
   return (
-    <footer><div className="shell footer-inner"><div className="footer-brand"><Logo /><p>Custom goods from the best makers near you.</p></div><div className="footer-links"><div><strong>Shop</strong><a href="#marketplace">Custom cakes</a><a href="#categories">Flowers & gifts</a></div><div><strong>Help</strong><a href="#how-it-works">How it works</a><button type="button">Pickup guide</button></div><div><strong>Jipsa</strong><button type="button">Partner with us</button><a href="https://github.com/webmachinelearning/webmcp" target="_blank" rel="noreferrer">Built with WebMCP</a></div></div><small className="demo-disclosure">© 2026 Jipsa · Seoul, Korea · Made with local makers</small></div></footer>
+    <footer><div className="shell footer-inner"><div className="footer-brand"><Logo /><p>Custom cakes from independent makers near you.</p></div><div className="footer-links"><div><strong>Shop</strong><a href="#marketplace">Cake makers</a><a href="#marketplace">Pickup-ready cakes</a></div><div><strong>Help</strong><a href="#how-it-works">How it works</a><button type="button">Pickup guide</button></div><div><strong>Jipsa</strong><button type="button">Partner with us</button><a href="https://github.com/webmachinelearning/webmcp" target="_blank" rel="noreferrer">Built with WebMCP</a></div></div><small className="demo-disclosure">© 2026 Jipsa · Seoul, Korea · Made with local cake makers</small></div></footer>
   );
 }
 
@@ -609,7 +562,6 @@ export default function App() {
         <Hero onOpenAgent={() => setAgentOpen(true)} />
         <Marketplace state={state} onOpenAgent={() => setAgentOpen(true)} />
         <HowJipsaWorks onOpenAgent={() => setAgentOpen(true)} />
-        <BroaderCategories />
       </main>
       <Footer />
       <Configurator state={state} onClose={() => marketplaceStore.update({ configPanelOpen: false })} onOpenAgent={() => setAgentOpen(true)} />

@@ -1,4 +1,4 @@
-import type { CategoryId, Store } from "./types";
+import type { Store } from "./types";
 
 const baseSizes = ["Mini · serves 2", "Small · serves 4", "Medium · serves 6", "Large · serves 10"];
 const baseColors = ["White", "Lavender", "Light pink", "Butter yellow"];
@@ -76,25 +76,9 @@ export const cakeStores: Store[] = cakeSeeds.map((seed, index) => {
   };
 });
 
-export const categories: Array<{
-  id: CategoryId;
-  label: string;
-  count: number;
-  description: string;
-  sampleShops: string[];
-}> = [
-  { id: "cakes", label: "Custom Cakes", count: 20, description: "Made for your moment", sampleShops: cakeStores.map((store) => store.name) },
-  { id: "flowers", label: "Flowers", count: 20, description: "Built stem by stem", sampleShops: ["Field Note", "Moss & Stem", "April Flora", "Green Letter", "Sunday Bloom", "Stem House", "Quiet Garden", "Flora Index", "Pollen Room", "Meadow Office", "Tulip Table", "Fleur Seongsu", "Ivy Letter", "Season Stem", "Wild Petal", "Garden Minute", "Leaf & Lace", "Soft Branch", "Camellia Club", "Bloom Archive"] },
-  { id: "gifts", label: "Custom Gifts", count: 20, description: "Personal, down to the detail", sampleShops: ["Pressed Object", "Small Hours", "Grain Studio", "Kindred Works", "Mono Gift Lab", "Etch House", "Personal Matter", "Object Sunday", "Made Kindly", "Paper & Pine", "Initial Works", "The Gift Edit", "Tiny Keepsake", "Form & Favor", "Named Things", "Warm Object", "Studio Token", "Good Measure", "Crafted Note", "The Small Present"] },
-  { id: "desserts", label: "Desserts", count: 20, description: "Small-batch and ready nearby", sampleShops: ["Pudding Club", "Salted Noon", "Cookie Office", "Soft Serve Lab", "Meringue Room", "Custard Corner", "Tart Weather", "Scoop Letter", "Brownie Index", "Sweet Assembly", "Cream Pocket", "Madeleine Morning", "Caramel Table", "Jelly Sunday", "Choux Studio", "Crumb Counter", "Sugar Window", "Pie Parcel", "Whisk & Spoon", "Dessert Draft"] },
-];
-
 export const categorySchemas = {
   cakes: ["size", "servings", "flavor", "filling", "creamColor", "lettering", "pickupTime"],
-  flowers: ["bouquetSize", "flowerType", "color", "occasion", "deliveryMethod", "deliveryTime"],
-  gifts: ["material", "engraving", "color", "packaging", "productionDeadline"],
-  desserts: ["productType", "quantity", "flavor", "allergens", "packaging", "pickupTime"],
-} satisfies Record<CategoryId, string[]>;
+} as const;
 
 export function getStore(storeId: string) {
   return cakeStores.find((store) => store.id === storeId);

@@ -6,6 +6,7 @@ import type {
   ProductConfiguration,
   Quote,
   SearchArgs,
+  SearchBreakdown,
   SearchCandidate,
   ToolLog,
 } from "./types";
@@ -36,6 +37,7 @@ const initialState = (): MarketplaceState => ({
   category: "cakes",
   searchArgs: null,
   searchResults: [],
+  searchBreakdown: null,
   selectedStoreId: null,
   configuration: null,
   quote: null,
@@ -92,15 +94,6 @@ function closestSlot(slots: string[], requested: string) {
   return [...slots].sort((a, b) => Math.abs(minutes(a) - minutes(requested)) - Math.abs(minutes(b) - minutes(requested)))[0];
 }
 
-function estimatedPrice(storeId: string, args: SearchArgs) {
-  const store = getStore(storeId);
-  if (!store) return Number.POSITIVE_INFINITY;
-  let price = store.product.basePrice;
-  if (normalize(args.filling).includes("strawberry") || normalize(args.ingredient).includes("strawberry")) price += 4000;
-  if (args.letteringRequired) price += 2000;
-  return price;
-}
-
 function defaultConfiguration(storeId: string): ProductConfiguration | null {
   const store = getStore(storeId);
   if (!store) return null;
@@ -120,10 +113,48 @@ function defaultConfiguration(storeId: string): ProductConfiguration | null {
   };
 }
 
-export function searchStores(args: SearchArgs): SearchCandidate[] {
+function configurationForSearch(storeId: string, args: SearchArgs): ProductConfiguration | null {
+  const store = getStore(storeId);
+  const configuration = defaultConfiguration(storeId);
+  if (!store || !configuration) return null;
+
+  const requestedFilling = normalize(args.filling || args.ingredient);
+  const matchingFilling = requestedFilling
+    ? store.product.fillings.find((item) => normalize(item).includes(requestedFilling))
+    : store.product.fillings.find((item) => !normalize(item).includes("strawberry"));
+  const matchingSize = args.servings === undefined
+    ? undefined
+    : store.product.sizes.find((item) => normalize(item).includes(`serves ${args.servings}`));
+  const matchingFlavor = args.flavor
+    ? store.product.flavors.find((item) => normalize(item).includes(normalize(args.flavor)))
+    : undefined;
+  const matchingColor = args.creamColor
+    ? store.product.creamColors.find((item) => normalize(item) === normalize(args.creamColor))
+    : undefined;
+
+  return {
+    ...configuration,
+    size: matchingSize || configuration.size,
+    servings: args.servings ?? configuration.servings,
+    flavor: matchingFlavor || configuration.flavor,
+    filling: matchingFilling || store.product.fillings.find((item) => !normalize(item).includes("strawberry")) || store.product.fillings[0],
+    creamColor: matchingColor || configuration.creamColor,
+    lettering: args.letteringRequired && store.product.lettering ? "Custom lettering" : "",
+    pickupDate: args.pickupDate || configuration.pickupDate,
+    pickupTime: args.pickupTime || configuration.pickupTime,
+  };
+}
+
+function estimatedPrice(storeId: string, args: SearchArgs) {
+  const configuration = configurationForSearch(storeId, args);
+  return configuration ? calculateQuote(configuration).totalKrw : Number.POSITIVE_INFINITY;
+}
+
+function evaluateStores(args: SearchArgs) {
   const requestedTime = args.pickupTime || "16:00";
-  const candidates = cakeStores.map((store) => {
+  return cakeStores.map((store) => {
     const unmet: string[] = [];
+    const productUnmet: string[] = [];
     const product = store.product;
     const price = estimatedPrice(store.id, args);
     const closestPickupTime = closestSlot(store.pickupSlots, requestedTime);
@@ -131,12 +162,13 @@ export function searchStores(args: SearchArgs): SearchCandidate[] {
 
     if (args.maxDistanceKm !== undefined && store.distanceKm > args.maxDistanceKm) unmet.push(`Distance is ${store.distanceKm} km`);
     if (args.maxBudgetKrw !== undefined && price > args.maxBudgetKrw) unmet.push(`Estimated price is ₩${price.toLocaleString("en-US")}`);
-    if (args.servings !== undefined && !product.servings.includes(args.servings)) unmet.push(`Does not offer exactly ${args.servings} servings`);
-    if (args.flavor && !product.flavors.some((item) => normalize(item).includes(normalize(args.flavor)))) unmet.push(`${args.flavor} flavor unavailable`);
-    if (args.filling && !product.fillings.some((item) => normalize(item).includes(normalize(args.filling)))) unmet.push(`${args.filling} filling unavailable`);
-    if (args.ingredient && !product.ingredients.some((item) => normalize(item).includes(normalize(args.ingredient))) && !product.fillings.some((item) => normalize(item).includes(normalize(args.ingredient)))) unmet.push(`${args.ingredient} unavailable`);
-    if (args.creamColor && !product.creamColors.some((item) => normalize(item) === normalize(args.creamColor))) unmet.push(`${args.creamColor} cream unavailable`);
-    if (args.letteringRequired && !product.lettering) unmet.push("Custom lettering unavailable");
+    if (args.servings !== undefined && !product.servings.includes(args.servings)) productUnmet.push(`Does not offer exactly ${args.servings} servings`);
+    if (args.flavor && !product.flavors.some((item) => normalize(item).includes(normalize(args.flavor)))) productUnmet.push(`${args.flavor} flavor unavailable`);
+    if (args.filling && !product.fillings.some((item) => normalize(item).includes(normalize(args.filling)))) productUnmet.push(`${args.filling} filling unavailable`);
+    if (args.ingredient && !product.ingredients.some((item) => normalize(item).includes(normalize(args.ingredient))) && !product.fillings.some((item) => normalize(item).includes(normalize(args.ingredient)))) productUnmet.push(`${args.ingredient} unavailable`);
+    if (args.creamColor && !product.creamColors.some((item) => normalize(item) === normalize(args.creamColor))) productUnmet.push(`${args.creamColor} cream unavailable`);
+    if (args.letteringRequired && !product.lettering) productUnmet.push("Custom lettering unavailable");
+    unmet.push(...productUnmet);
 
     const slotDelta = Math.abs(minutes(closestPickupTime) - minutes(requestedTime));
     const satisfiesAllProductRequirements = unmet.length === 0;
@@ -146,24 +178,49 @@ export function searchStores(args: SearchArgs): SearchCandidate[] {
       : `${store.name} matches the product requirements${exactPickupTime ? "" : `; the closest pickup is ${formatTime(closestPickupTime)}`}${unmet.length ? `; ${unmet[0]}` : ""}.`;
 
     return {
-      storeId: store.id,
-      storeName: store.name,
-      distanceKm: store.distanceKm,
-      estimatedPriceKrw: price,
-      requestedPickupTime: requestedTime,
-      closestPickupTime,
-      exactPickupTime,
-      satisfiesAllProductRequirements,
-      unmetRequirements: unmet,
-      score,
-      explanation,
+      candidate: {
+        storeId: store.id,
+        storeName: store.name,
+        distanceKm: store.distanceKm,
+        estimatedPriceKrw: price,
+        requestedPickupTime: requestedTime,
+        closestPickupTime,
+        exactPickupTime,
+        satisfiesAllProductRequirements,
+        unmetRequirements: unmet,
+        score,
+        explanation,
+      } satisfies SearchCandidate,
+      outsideRadius: args.maxDistanceKm !== undefined && store.distanceKm > args.maxDistanceKm,
+      overBudget: args.maxBudgetKrw !== undefined && price > args.maxBudgetKrw,
+      missingProductOption: productUnmet.length > 0,
+      exactPickupUnavailable: !exactPickupTime,
     };
   });
+}
 
-  return candidates
+export function compareStores(args: SearchArgs): { results: SearchCandidate[]; breakdown: SearchBreakdown } {
+  const evaluated = evaluateStores(args);
+  const results = evaluated
+    .map((item) => item.candidate)
     .filter((candidate) => candidate.unmetRequirements.length === 0 || (candidate.storeId === "dear-cake" || candidate.storeId === "cake-forest"))
     .sort((a, b) => Number(b.exactPickupTime) - Number(a.exactPickupTime) || Number(b.satisfiesAllProductRequirements) - Number(a.satisfiesAllProductRequirements) || b.score - a.score)
     .slice(0, 6);
+  return {
+    results,
+    breakdown: {
+      checked: evaluated.length,
+      outsideRadius: evaluated.filter((item) => item.outsideRadius).length,
+      overBudget: evaluated.filter((item) => item.overBudget).length,
+      missingProductOption: evaluated.filter((item) => item.missingProductOption).length,
+      exactPickupUnavailable: evaluated.filter((item) => item.exactPickupUnavailable).length,
+      shortlisted: results.length,
+    },
+  };
+}
+
+export function searchStores(args: SearchArgs): SearchCandidate[] {
+  return compareStores(args).results;
 }
 
 export function formatTime(time: string) {
@@ -208,7 +265,7 @@ export async function executeMarketplaceTool(toolName: string, input: Record<str
       case "search_local_stores": {
         const args = input as SearchArgs;
         if (args.category && args.category !== "cakes") {
-          result = toolError("CATEGORY_NOT_AVAILABLE", "Guided ordering currently supports the cakes category.", "Use category=cakes. Flowers, gifts, and desserts are available for browsing.");
+          result = toolError("CATEGORY_NOT_AVAILABLE", "Jipsa currently specializes in custom cakes.", "Retry with category=cakes.");
           break;
         }
         if (args.maxDistanceKm !== undefined && (Number(args.maxDistanceKm) <= 0 || Number(args.maxDistanceKm) > 50)) {
@@ -219,12 +276,13 @@ export async function executeMarketplaceTool(toolName: string, input: Record<str
           result = toolError("INVALID_BUDGET", "maxBudgetKrw must be at least 10000.", "Retry with a budget in Korean won.");
           break;
         }
-        const results = searchStores(args);
-        update({ searchArgs: args, searchResults: results, category: args.category || "cakes", lastEvent: `${results.length} stores compared` });
-        stateChange = `Search results updated with ${results.length} ranked candidates`;
+        const { results, breakdown } = compareStores(args);
+        update({ searchArgs: args, searchResults: results, searchBreakdown: breakdown, category: "cakes", lastEvent: `${breakdown.checked} makers checked; ${breakdown.shortlisted} shortlisted` });
+        stateChange = `Compared ${breakdown.checked} makers and updated the page with ${breakdown.shortlisted} ranked candidates`;
         result = {
           ok: true,
           query: args,
+          comparison: breakdown,
           exactMatches: results.filter((item) => item.exactPickupTime && item.satisfiesAllProductRequirements),
           nearMatches: results.filter((item) => !item.exactPickupTime || !item.satisfiesAllProductRequirements),
           bestMatch: results[0],

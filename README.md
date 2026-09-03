@@ -1,6 +1,6 @@
 # Jipsa
 
-Jipsa is a consumer marketplace for custom goods from trusted local makers. Customers can browse and personalize an order like any modern shop, or ask ChatGPT to compare options and prepare it for confirmation.
+Jipsa is a consumer marketplace for custom cakes from trusted local makers. Customers can browse and personalize an order like any modern shop, or ask ChatGPT to compare options and prepare it for confirmation.
 
 > A real shopping flow for people, with structured ordering capabilities for ChatGPT.
 
@@ -16,7 +16,7 @@ Jipsa makes those capabilities explicit. The page registers small, composable We
 
 ## Why WebMCP matters
 
-WebMCP turns the marketplace from pages an agent must interpret into capabilities it can reliably use. A single structured search compares 20 cake stores across distance, price, serving count, ingredients, cream colors, lettering support, and pickup inventory. The agent can then compose focused tools through the complete commerce lifecycle.
+WebMCP turns the marketplace from pages an agent must interpret into capabilities it can reliably use. A single structured search checks all 20 cake makers across distance, exact configured price, serving count, ingredients, cream colors, lettering support, and pickup inventory. The page shows both the shortlist and criterion-level rejection counts so the comparison is inspectable rather than implied.
 
 Every mutating tool updates the visible interface. If an agent changes a cake from lavender to light pink, the product photography and option selection change immediately for the human too. `prepare_order` never creates an order. It produces a short-lived confirmation token and opens the final human review. `place_order` requires both that exact token and `confirmed: true`.
 
@@ -43,13 +43,13 @@ Then continue:
 
 > Actually, make the cream light pink.
 
-The agent receives an exact match plus transparent near-time alternatives, changes only the requested fields, calculates a real option-based quote, prepares the order, and waits for final human confirmation.
+The agent receives an exact match plus transparent near-time alternatives, changes only the requested fields, calculates a real option-based quote, prepares the order, and waits for final human confirmation. Search estimates and the final order both use the same pricing engine.
 
 ## Available WebMCP tools
 
 | Tool | Responsibility | Visible state change |
 | --- | --- | --- |
-| `search_local_stores` | Filter and rank stores against compound constraints | Ranked marketplace results and explanation |
+| `search_local_stores` | Filter and rank all 20 makers against compound constraints | Comparison breakdown, ranked results, and explanation |
 | `get_store_details` | Retrieve capabilities and select a store | Opens the product configurator |
 | `search_products` | Search product, flavor, filling, and store text | None |
 | `get_product_options` | Return valid configuration options | None |
@@ -72,13 +72,13 @@ WebMCP tool callbacks ┘               │
                                       └─ localStorage prototype order ledger
 ```
 
-- `src/data.ts` contains 20 varied cake stores and reusable schemas for cakes, flowers, gifts, and desserts.
+- `src/data.ts` contains 20 cake makers with distinct prices, options, lead times, and pickup slots.
 - `src/marketplace.ts` contains deterministic search, ranking, pricing, validation, confirmation, persistence, and audit behavior.
 - `src/webmcp.ts` defines and registers the 10 WebMCP tools through `document.modelContext.registerTool()`.
 - `src/App.tsx` renders the storefront, live configurator, ChatGPT shopping drawer, confirmation, and order ledger.
 - `src/marketplace.test.ts` covers ranking, partial updates, useful errors, and confirmation-gated persistence.
 
-The category model is schema-driven rather than a collection of separate storefront pages. The shipped cake flow is deep; Flowers, Custom Gifts, and Desserts show how the same commerce model extends to a broader catalog.
+The submission intentionally focuses on one complete vertical—custom cakes—rather than presenting unfinished categories. Every visible maker participates in the same search, configuration, pricing, and pickup flow.
 
 ## Run locally
 
@@ -104,13 +104,13 @@ npm run build
 
 1. Land directly in the consumer marketplace and briefly browse a store manually.
 2. Open Shop with ChatGPT and run the prepared compound request.
-3. Show the ranked exact and near-time matches plus the best-match reason.
+3. Show `20 makers checked`, the criterion-level rejection counts, and the ranked exact and near-time matches.
 4. Select the best match and configure lavender cream with “Happy Birthday Mina”.
 5. Correct only the cream color to light pink and point out that all other fields persist.
 6. Calculate the itemized quote and prepare the order.
 7. Use the final human confirmation dialog to call `place_order` and create a persisted prototype order.
 8. Open Developer Audit to show the composed tool calls, arguments, results, and state changes.
-9. End on Flowers, Custom Gifts, and Desserts to demonstrate the reusable category architecture.
+9. End on the shared storefront state to show that the agent's choices remain visible to the human.
 
 ## Public repository safety
 
