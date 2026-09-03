@@ -1,0 +1,60 @@
+# WebMCP Challenge audit
+
+This audit uses the four judging dimensions in the project brief and focuses on concrete evidence in the shipped repository.
+
+## 1. WebMCP leverage — 9/10
+
+Evidence:
+
+- Ten small, composable tools span discovery, comparison, product inspection, availability, configuration, quote, safe preparation, order placement, and order status.
+- Tools register through the current `document.modelContext.registerTool()` API.
+- All tools have distinct English names, decision-oriented descriptions, JSON Schema inputs, runtime validation, structured results, and recoverable errors.
+- Agent actions reuse marketplace domain functions and update the same visible state as human actions.
+- Search performs non-trivial filtering, price estimation, time-distance comparison, and ranking over 20 stores.
+- The developer audit exposes tool arguments, results, state changes, and errors.
+- A local registry fallback is clearly labeled as a rehearsal when the browser does not expose WebMCP; it does not claim a native protocol connection.
+
+Remaining ceiling:
+
+- Native discovery must be tested again on the final HTTPS deployment in ChatGPT's in-app browser or an origin-trial Chrome build. The repository includes the required security headers for Netlify and Vercel.
+
+## 2. Execution — 9/10
+
+Evidence:
+
+- The complete search → compare → select → configure → correct → quote → confirm → order flow works from a clean state.
+- Twenty varied cake stores have different prices, distances, capabilities, and pickup slots.
+- Option-based quote calculation produces the expected ₩44,000 demo total.
+- Partial configuration changes preserve unspecified state.
+- Demo orders are persisted in localStorage and can be read from the visible order ledger or `get_order_status`.
+- Five automated tests cover ranking, state preservation, invalid inputs, confirmation gating, persistence, and native tool registration.
+- The production bundle builds successfully and was smoke-tested in a clean browser tab with no console errors.
+- Desktop and 390 px mobile layouts were visually inspected.
+
+Remaining ceiling:
+
+- Public access and native WebMCP discovery should be verified against the final production URL before submission.
+
+## 3. Potential impact — 9/10
+
+Evidence:
+
+- The compound demo request replaces repeated manual visits to store detail, pricing, customization, and calendar pages.
+- Exact matches and near-time alternatives are separated instead of hiding tradeoffs.
+- The search result explains why the best match was selected.
+- `prepare_order` and `place_order` are deliberately separate. No order can be created without a matching short-lived token and explicit confirmation.
+- Category schemas show how the same architecture applies to flowers, custom gifts, and desserts.
+
+## 4. Creativity and ambition — 9/10
+
+Evidence:
+
+- Nearmade is designed as a dual-interface marketplace from the beginning, not a form with one AI button attached.
+- The human remains in a polished consumer workflow while the agent uses structured capabilities.
+- Generated product photography changes with cream-color configuration, making agent state changes immediately legible.
+- Agent Studio is a transparent tool rehearsal and demo director, not a fake hard-coded chat answer.
+- The confirmation boundary demonstrates a collaborative Human + Agent ordering pattern that can extend across local custom commerce.
+
+## Final risk review
+
+After public access is enabled, run one native WebMCP discovery pass and capture a sub-three-minute screen recording. The code, deployment headers, deterministic demo state, and README script are ready for that final submission check.
