@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { executeMarketplaceTool, marketplaceStore, searchStores } from "./marketplace";
 import { registerWebMcpTools, webMcpTools } from "./webmcp";
 
-describe("Nearmade marketplace tools", () => {
+describe("Jipsa marketplace tools", () => {
   beforeEach(() => {
     localStorage.clear();
     marketplaceStore.reset();
@@ -87,7 +87,7 @@ describe("Nearmade marketplace tools", () => {
     expect(placed.ok).toBe(true);
     expect(placed.order.status).toBe("confirmed");
     expect(marketplaceStore.getState().orders).toHaveLength(1);
-    expect(JSON.parse(localStorage.getItem("nearmade-demo-orders") || "[]")).toHaveLength(1);
+    expect(JSON.parse(localStorage.getItem("jipsa-orders") || "[]")).toHaveLength(1);
   });
 
   it("registers ten distinct, schema-backed tools with document.modelContext", async () => {

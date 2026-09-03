@@ -36,7 +36,7 @@ await build({
   target: ["es2022"],
   format: "esm",
   platform: "neutral",
-  define: { __NEARMADE_HTML__: JSON.stringify(productionHtml) },
+  define: { __JIPSA_HTML__: JSON.stringify(productionHtml) },
   outfile: path.join(serverDirectory, "index.js"),
   logLevel: "info",
 });
@@ -47,7 +47,7 @@ await writeFile(
   path.join(serverDirectory, "wrangler.json"),
   JSON.stringify(
     {
-      name: "nearmade-marketplace",
+      name: "jipsa",
       main: "index.js",
       compatibility_date: "2026-05-22",
       assets: {
@@ -63,4 +63,4 @@ await writeFile(
   "utf8",
 );
 
-console.log("Nearmade production bundle written to dist/.");
+console.log("Jipsa production bundle written to dist/.");

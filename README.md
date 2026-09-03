@@ -1,16 +1,18 @@
-# Nearmade
+# Jipsa
 
-Nearmade is an agent-native marketplace for local custom goods. It gives people a polished visual storefront and gives browser agents precise, structured capabilities over the same catalog, configuration, quote, and order state.
+Jipsa is a consumer marketplace for custom goods from trusted local makers. Customers can browse and personalize an order like any modern shop, or ask ChatGPT to compare options and prepare it for confirmation.
 
-> One website, two interfaces. Visual for humans. Structured for agents.
+> A real shopping flow for people, with structured ordering capabilities for ChatGPT.
 
-This repository is a standalone submission for **The WebMCP Challenge**. All names, products, inventory, and orders are clearly fictional demo data. No API keys or production credentials are required.
+Live storefront: https://jipsa.dev557938.chatgpt.site
+
+This repository is a standalone submission for **The WebMCP Challenge**. The current catalog, availability, and orders are sample data; no API keys or production credentials are required.
 
 ## The problem
 
 Ordering a custom item from a local maker is a high-friction research task. A customer normally opens many stores, checks size and price tables, looks for customization rules, compares pickup calendars, and repeats the process when one constraint fails. A browser agent can click through those pages, but visual actuation is slow and error-prone.
 
-Nearmade makes those capabilities explicit. The page registers small, composable WebMCP tools for search, store discovery, option inspection, availability, configuration, quoting, safe order preparation, order placement, and status. The tools operate on real in-app data and the exact same state as the human interface.
+Jipsa makes those capabilities explicit. The page registers small, composable WebMCP tools for search, store discovery, option inspection, availability, configuration, quoting, safe order preparation, order placement, and status. The tools operate on the same catalog and state as the human interface.
 
 ## Why WebMCP matters
 
@@ -18,7 +20,7 @@ WebMCP turns the marketplace from pages an agent must interpret into capabilitie
 
 Every mutating tool updates the visible interface. If an agent changes a cake from lavender to light pink, the product photography and option selection change immediately for the human too. `prepare_order` never creates an order. It produces a short-lived confirmation token and opens the final human review. `place_order` requires both that exact token and `confirmed: true`.
 
-The implementation follows the current `document.modelContext` imperative API. In browsers without WebMCP enabled, Agent Studio rehearses the same local tool definitions and execution functions, making the app easy to judge without pretending that a protocol connection exists.
+The implementation follows the current `document.modelContext` imperative API. In browsers without WebMCP enabled, the **Shop with ChatGPT** drawer can rehearse the same local tool definitions and execution functions without pretending that a protocol connection exists.
 
 ## Human experience
 
@@ -27,11 +29,11 @@ The implementation follows the current `document.modelContext` imperative API. I
 - Open a maker, configure size, flavor, filling, design, cream color, lettering, and pickup time.
 - Watch cake photography respond to cream-color changes.
 - Receive an itemized quote and explicitly confirm the final order.
-- Reopen locally persisted demo orders from the header.
+- Reopen locally persisted prototype orders from the header.
 
 ## Agent experience
 
-Use the prepared challenge flow in **Agent Studio**, or open the site in a WebMCP-capable browser and ask:
+Use the prepared flow in **Shop with ChatGPT**, or open the site in a WebMCP-capable browser and ask:
 
 > Find a custom cake within 3 km, under ₩50,000, for four people, with strawberry, white cream, custom lettering, and pickup this Saturday at 4 PM.
 
@@ -55,10 +57,10 @@ The agent receives an exact match plus transparent near-time alternatives, chang
 | `configure_product` | Create or partially update configuration | Live image, options, lettering, and pickup state |
 | `get_quote` | Calculate an itemized option-based price | Quote card and current total |
 | `prepare_order` | Prepare a confirmation-bound summary | Opens final review; does not create an order |
-| `place_order` | Persist a confirmed demo order | Success state and order ledger |
+| `place_order` | Persist a confirmed prototype order | Success state and order ledger |
 | `get_order_status` | Read status for a persisted order | None |
 
-Every tool has an English name and description, JSON Schema input, validation, structured JSON output, and actionable recoverable errors. The Developer Audit inside Agent Studio exposes tool name, arguments, result, state change, and error.
+Every tool has an English name and description, JSON Schema input, validation, structured JSON output, and actionable recoverable errors. The Developer Audit inside the ChatGPT shopping drawer exposes tool name, arguments, result, state change, and error.
 
 ## Architecture
 
@@ -67,16 +69,16 @@ Human marketplace UI ─┐
                       ├─ shared marketplace store ─ catalog + pricing + inventory
 WebMCP tool callbacks ┘               │
                                       ├─ visible configuration / quote state
-                                      └─ localStorage demo order ledger
+                                      └─ localStorage prototype order ledger
 ```
 
 - `src/data.ts` contains 20 varied cake stores and reusable schemas for cakes, flowers, gifts, and desserts.
 - `src/marketplace.ts` contains deterministic search, ranking, pricing, validation, confirmation, persistence, and audit behavior.
 - `src/webmcp.ts` defines and registers the 10 WebMCP tools through `document.modelContext.registerTool()`.
-- `src/App.tsx` renders the human marketplace, live configurator, Agent Studio, confirmation, and order ledger.
+- `src/App.tsx` renders the storefront, live configurator, ChatGPT shopping drawer, confirmation, and order ledger.
 - `src/marketplace.test.ts` covers ranking, partial updates, useful errors, and confirmation-gated persistence.
 
-The category model is schema-driven rather than a collection of separate storefront pages. The shipped cake flow is deep; the Flowers, Custom Gifts, and Desserts surfaces make the broader architecture legible without weakening the primary demo.
+The category model is schema-driven rather than a collection of separate storefront pages. The shipped cake flow is deep; Flowers, Custom Gifts, and Desserts show how the same commerce model extends to a broader catalog.
 
 ## Run locally
 
@@ -87,7 +89,7 @@ npm install
 npm run dev
 ```
 
-Open the URL printed by Vite. For native WebMCP testing, use ChatGPT's in-app browser or a Chrome build with WebMCP testing enabled. The page uses local demo data, so there is no backend setup.
+Open the URL printed by Vite. For native WebMCP testing, use ChatGPT's in-app browser or a Chrome build with WebMCP testing enabled. The page uses local sample data, so there is no backend setup.
 
 `vercel.json` and `netlify.toml` include the origin-cluster and `tools` permissions headers required for a secure WebMCP deployment.
 
@@ -101,12 +103,12 @@ npm run build
 ## Demo flow
 
 1. Land directly in the consumer marketplace and briefly browse a store manually.
-2. Open Agent Studio and run the prepared compound request.
+2. Open Shop with ChatGPT and run the prepared compound request.
 3. Show the ranked exact and near-time matches plus the best-match reason.
 4. Select the best match and configure lavender cream with “Happy Birthday Mina”.
 5. Correct only the cream color to light pink and point out that all other fields persist.
 6. Calculate the itemized quote and prepare the order.
-7. Use the final human confirmation dialog to call `place_order` and create a persisted demo order.
+7. Use the final human confirmation dialog to call `place_order` and create a persisted prototype order.
 8. Open Developer Audit to show the composed tool calls, arguments, results, and state changes.
 9. End on Flowers, Custom Gifts, and Desserts to demonstrate the reusable category architecture.
 
@@ -114,4 +116,4 @@ npm run build
 
 - No secrets, credentials, personal data, or production connections.
 - Generated catalog photography is committed as a project asset.
-- Demo orders remain in the visitor's browser only.
+- Prototype orders remain in the visitor's browser only.

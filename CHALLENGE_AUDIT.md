@@ -16,7 +16,7 @@ Evidence:
 
 Remaining ceiling:
 
-- Native discovery must be tested again on the final HTTPS deployment in ChatGPT's in-app browser or an origin-trial Chrome build. The repository includes the required security headers for Netlify and Vercel.
+- Native discovery must be tested again on the final HTTPS deployment in ChatGPT's in-app browser or an origin-trial Chrome build. The live deployment includes the required WebMCP security headers.
 
 ## 2. Execution — 9/10
 
@@ -24,7 +24,7 @@ Evidence:
 
 - The complete search → compare → select → configure → correct → quote → confirm → order flow works from a clean state.
 - Twenty varied cake stores have different prices, distances, capabilities, and pickup slots.
-- Option-based quote calculation produces the expected ₩44,000 demo total.
+- Option-based quote calculation produces the expected ₩44,000 test total.
 - Partial configuration changes preserve unspecified state.
 - Demo orders are persisted in localStorage and can be read from the visible order ledger or `get_order_status`.
 - Five automated tests cover ranking, state preservation, invalid inputs, confirmation gating, persistence, and native tool registration.
@@ -33,13 +33,13 @@ Evidence:
 
 Remaining ceiling:
 
-- Public access and native WebMCP discovery should be verified against the final production URL before submission.
+- Native WebMCP discovery should be verified against the final production URL before submission.
 
 ## 3. Potential impact — 9/10
 
 Evidence:
 
-- The compound demo request replaces repeated manual visits to store detail, pricing, customization, and calendar pages.
+- The compound shopping request replaces repeated manual visits to store detail, pricing, customization, and calendar pages.
 - Exact matches and near-time alternatives are separated instead of hiding tradeoffs.
 - The search result explains why the best match was selected.
 - `prepare_order` and `place_order` are deliberately separate. No order can be created without a matching short-lived token and explicit confirmation.
@@ -49,12 +49,12 @@ Evidence:
 
 Evidence:
 
-- Nearmade is designed as a dual-interface marketplace from the beginning, not a form with one AI button attached.
+- Jipsa is designed as a consumer marketplace first, with ChatGPT ordering built into the same commerce flow.
 - The human remains in a polished consumer workflow while the agent uses structured capabilities.
 - Generated product photography changes with cream-color configuration, making agent state changes immediately legible.
-- Agent Studio is a transparent tool rehearsal and demo director, not a fake hard-coded chat answer.
-- The confirmation boundary demonstrates a collaborative Human + Agent ordering pattern that can extend across local custom commerce.
+- Shop with ChatGPT is a transparent tool rehearsal and shopping assistant, not a hard-coded chat answer.
+- The confirmation boundary demonstrates a collaborative human + agent ordering pattern that can extend across local custom commerce.
 
 ## Final risk review
 
-After public access is enabled, run one native WebMCP discovery pass and capture a sub-three-minute screen recording. The code, deployment headers, deterministic demo state, and README script are ready for that final submission check.
+Public access and the required deployment headers are verified. Run one native WebMCP discovery pass and capture a sub-three-minute screen recording before submission.

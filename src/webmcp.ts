@@ -108,7 +108,7 @@ export const webMcpTools: ToolDefinition[] = [
   {
     name: "place_order",
     title: "Place order",
-    description: "Place and persist the prepared demo order only after the user explicitly confirms the exact summary, pickup time, and total. Requires the current confirmation token and confirmed=true.",
+    description: "Place and persist the prepared order only after the user explicitly confirms the exact summary, pickup time, and total. Requires the current confirmation token and confirmed=true.",
     inputSchema: {
       type: "object",
       properties: { confirmationToken: id, confirmed: { type: "boolean", const: true } },
@@ -120,7 +120,7 @@ export const webMcpTools: ToolDefinition[] = [
   {
     name: "get_order_status",
     title: "Get order status",
-    description: "Retrieve the current status and pickup details for a demo order by its returned order identifier.",
+    description: "Retrieve the current status and pickup details for an order by its returned order identifier.",
     inputSchema: { type: "object", properties: { orderId: id }, required: ["orderId"] },
     annotations: { readOnlyHint: true, untrustedContentHint: false },
     execute: (input) => executeMarketplaceTool("get_order_status", input),
@@ -168,7 +168,7 @@ export async function invokeTool(toolName: string, input: Record<string, unknown
         }
       }
     } catch {
-      // The local registry keeps the demo inspectable in browsers without WebMCP enabled.
+      // The local registry keeps the shopping flow inspectable in browsers without WebMCP enabled.
     }
   }
   return executeMarketplaceTool(toolName, input);

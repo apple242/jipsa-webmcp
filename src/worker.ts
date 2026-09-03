@@ -6,7 +6,7 @@ interface Environment {
   ASSETS: AssetBinding;
 }
 
-declare const __NEARMADE_HTML__: string;
+declare const __JIPSA_HTML__: string;
 
 function withWebMcpHeaders(response: Response) {
   const headers = new Headers(response.headers);
@@ -25,7 +25,7 @@ export default {
 
     if (isDocumentRoute) {
       return withWebMcpHeaders(
-        new Response(request.method === "HEAD" ? null : __NEARMADE_HTML__, {
+        new Response(request.method === "HEAD" ? null : __JIPSA_HTML__, {
           headers: { "Content-Type": "text/html; charset=utf-8" },
         }),
       );

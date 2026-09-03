@@ -12,6 +12,8 @@ import type {
 
 const listeners = new Set<() => void>();
 let logSequence = 0;
+const ORDER_STORAGE_KEY = "jipsa-orders";
+const LEGACY_ORDER_STORAGE_KEY = "nearmade-demo-orders";
 
 function nextSaturday() {
   const date = new Date();
@@ -23,7 +25,8 @@ function nextSaturday() {
 function loadOrders(): DemoOrder[] {
   if (typeof localStorage === "undefined") return [];
   try {
-    return JSON.parse(localStorage.getItem("nearmade-demo-orders") || "[]") as DemoOrder[];
+    const savedOrders = localStorage.getItem(ORDER_STORAGE_KEY) ?? localStorage.getItem(LEGACY_ORDER_STORAGE_KEY);
+    return JSON.parse(savedOrders || "[]") as DemoOrder[];
   } catch {
     return [];
   }
@@ -64,7 +67,7 @@ export const marketplaceStore = {
   update,
   reset() {
     const orders = loadOrders();
-    state = { ...initialState(), orders, lastEvent: "Demo reset" };
+    state = { ...initialState(), orders, lastEvent: "Marketplace reset" };
     emit();
   },
   clearLogs() {
@@ -205,7 +208,7 @@ export async function executeMarketplaceTool(toolName: string, input: Record<str
       case "search_local_stores": {
         const args = input as SearchArgs;
         if (args.category && args.category !== "cakes") {
-          result = toolError("CATEGORY_NOT_AVAILABLE", "The deep agent ordering demo currently supports the cakes category.", "Use category=cakes. Flowers, gifts, and desserts are included as schema-driven expansion previews.");
+          result = toolError("CATEGORY_NOT_AVAILABLE", "Guided ordering currently supports the cakes category.", "Use category=cakes. Flowers, gifts, and desserts are available for browsing.");
           break;
         }
         if (args.maxDistanceKm !== undefined && (Number(args.maxDistanceKm) <= 0 || Number(args.maxDistanceKm) > 50)) {
@@ -401,7 +404,7 @@ export async function executeMarketplaceTool(toolName: string, input: Record<str
         const store = getStore(state.configuration.storeId);
         if (!store) throw new Error("The prepared store no longer exists.");
         const order: DemoOrder = {
-          id: `NM-${new Date().toISOString().slice(2, 10).replaceAll("-", "")}-${String(state.orders.length + 1).padStart(3, "0")}`,
+          id: `JIP-${new Date().toISOString().slice(2, 10).replaceAll("-", "")}-${String(state.orders.length + 1).padStart(3, "0")}`,
           status: "confirmed",
           createdAt: new Date().toISOString(),
           storeName: store.name,
@@ -409,9 +412,9 @@ export async function executeMarketplaceTool(toolName: string, input: Record<str
           quote: state.quote,
         };
         const orders = [order, ...state.orders];
-        if (typeof localStorage !== "undefined") localStorage.setItem("nearmade-demo-orders", JSON.stringify(orders));
+        if (typeof localStorage !== "undefined") localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(orders));
         update({ orders, preparedOrder: null, confirmationOpen: false, lastEvent: `Order ${order.id} confirmed` });
-        stateChange = `Persisted demo order ${order.id}`;
+        stateChange = `Persisted order ${order.id}`;
         result = { ok: true, order, message: `Order ${order.id} is confirmed for pickup at ${formatTime(order.configuration.pickupTime)}.` };
         break;
       }
@@ -420,7 +423,7 @@ export async function executeMarketplaceTool(toolName: string, input: Record<str
         const order = state.orders.find((item) => item.id === orderId);
         result = order
           ? { ok: true, orderId: order.id, status: order.status, storeName: order.storeName, pickupDate: order.configuration.pickupDate, pickupTime: order.configuration.pickupTime }
-          : toolError("ORDER_NOT_FOUND", "No demo order exists with that orderId.", "Use the orderId returned by place_order.");
+          : toolError("ORDER_NOT_FOUND", "No order exists with that orderId.", "Use the orderId returned by place_order.");
         break;
       }
       default:
