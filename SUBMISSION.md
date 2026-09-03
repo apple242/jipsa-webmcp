@@ -4,9 +4,9 @@
 
 A real local cake marketplace where people shop visually and AI agents compare, configure, quote, and prepare the same order through WebMCP.
 
-Live app: https://jipsa.dev557938.chatgpt.site  
-Public demo video: https://youtu.be/a7XlwGjacD0  
-Public source: https://github.com/apple242/jipsa-webmcp
+- Live app: https://jipsa.dev557938.chatgpt.site
+- Public demo video: https://youtu.be/a7XlwGjacD0
+- Public source: https://github.com/apple242/jipsa-webmcp
 
 ## What Jipsa does
 
